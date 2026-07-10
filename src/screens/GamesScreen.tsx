@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, Modal, Animated as RNAnimated } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, Modal, ActivityIndicator } from 'react-native';
 import { Gamepad, Star, Medal, Trophy, X, Play, RefreshCw, Heart } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useResponsive } from '../hooks/useResponsive';
+import { useAuth } from '../context/AuthContext';
+import { getProfile, updateUserPoints, awardBadge } from '../services/api';
 
-// --- MOOD MATCH LOGIC ---
 const EMOJIS = ['🌸', '✨', '🌙', '🦋', '💖', '🌿', '🔮', '💧'];
 
 interface Card {
@@ -25,16 +26,18 @@ const generateCards = (): Card[] => {
 };
 
 const GamesScreen = () => {
-  const [points, setPoints] = useState(1250);
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [points, setPoints] = useState(0);
+  const [badges, setBadges] = useState<string[]>([]);
+  
   const [activeGame, setActiveGame] = useState<string | null>(null);
   
-  // Mood Match State
   const [cards, setCards] = useState<Card[]>([]);
   const [flippedIndices, setFlippedIndices] = useState<number[]>([]);
   const [matchScore, setMatchScore] = useState(0);
   const [moves, setMoves] = useState(0);
 
-  // Bubble Pop State
   const [bubbles, setBubbles] = useState<{id: number, x: number, y: number, color: string, popped: boolean}[]>([]);
   const [bubbleScore, setBubbleScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(30);
@@ -42,7 +45,34 @@ const GamesScreen = () => {
 
   const { isDesktop, isTablet, contentPadding, maxContentWidth } = useResponsive();
 
-  // --- MOOD MATCH HANDLERS ---
+  useEffect(() => {
+    if (user) loadData();
+  }, [user]);
+
+  const loadData = async () => {
+    try {
+      const { user: dbUser } = await getProfile(user!.id);
+      setPoints(dbUser.points || 0);
+      setBadges(dbUser.badges || []);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addPoints = async (pts: number) => {
+    setPoints(p => p + pts);
+    if (user) await updateUserPoints(user.id, pts);
+  };
+
+  const checkBadge = async (badgeId: string) => {
+    if (!badges.includes(badgeId) && user) {
+      setBadges(b => [...b, badgeId]);
+      await awardBadge(user.id, badgeId);
+    }
+  };
+
   const startMoodMatch = () => {
     setActiveGame('mood_match');
     setCards(generateCards());
@@ -73,11 +103,11 @@ const GamesScreen = () => {
           setCards(matchedCards);
           setFlippedIndices([]);
           setMatchScore(s => s + 10);
-          setPoints(p => p + 10);
+          addPoints(10);
           
           if (matchedCards.every(c => c.isMatched)) {
-            // Game Won
-            setPoints(p => p + 50); // Bonus
+            addPoints(50); 
+            if (moves + 1 <= 12) checkBadge('mind_reader');
           }
         }, 500);
       } else {
@@ -92,7 +122,6 @@ const GamesScreen = () => {
     }
   };
 
-  // --- BUBBLE POP HANDLERS ---
   const startBubblePop = () => {
     setActiveGame('bubble_pop');
     setBubbleScore(0);
@@ -103,9 +132,9 @@ const GamesScreen = () => {
 
   const generateBubbles = () => {
     const colors = ['#FF7096', '#7CB69E', '#F4A261', '#9B8EC0'];
-    const newBubbles = Array.from({ length: 8 }).map((_, i) => ({
+    const newBubbles = Array.from({ length: 8 }).map(() => ({
       id: Math.random(),
-      x: Math.random() * 80 + 10, // 10% to 90%
+      x: Math.random() * 80 + 10,
       y: Math.random() * 80 + 10,
       color: colors[Math.floor(Math.random() * colors.length)],
       popped: false
@@ -121,7 +150,7 @@ const GamesScreen = () => {
     newBubbles[index].popped = true;
     setBubbles(newBubbles);
     setBubbleScore(s => s + 5);
-    setPoints(p => p + 5);
+    addPoints(5);
 
     if (newBubbles.every(b => b.popped)) {
       generateBubbles();
@@ -134,17 +163,32 @@ const GamesScreen = () => {
       timer = setInterval(() => setTimeLeft(t => t - 1), 1000);
     } else if (timeLeft === 0 && bubbleActive) {
       setBubbleActive(false);
-      setPoints(p => p + 20); // Completion bonus
+      addPoints(20);
+      if (bubbleScore >= 100) checkBadge('zen_master');
     }
     return () => clearInterval(timer);
-  }, [activeGame, bubbleActive, timeLeft]);
+  }, [activeGame, bubbleActive, timeLeft, bubbleScore]);
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-white justify-center items-center">
+        <ActivityIndicator size="large" color="#FF7096" />
+      </SafeAreaView>
+    );
+  }
+
+  const badgeDefinitions = [
+    { id: 'early_bird', title: 'Early Bird', desc: 'Logged mood 7 days in a row' },
+    { id: 'zen_master', title: 'Zen Master', desc: 'Popped 100 anxiety bubbles' },
+    { id: 'mind_reader', title: 'Mind Reader', desc: 'Perfect score in Mood Match' },
+    { id: 'cycle_sync', title: 'Cycle Sync', desc: 'Logged full cycle' },
+  ];
 
   return (
     <SafeAreaView className="flex-1 bg-white">
       <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: contentPadding, paddingTop: 16 }} showsVerticalScrollIndicator={false}>
         <View style={{ maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' }}>
           
-        {/* Header */}
         <Animated.View entering={FadeInDown.duration(600)} className="items-center mb-8">
           <View className="flex-row items-center mb-2">
             <Gamepad size={32} color="#8B004A" />
@@ -154,7 +198,6 @@ const GamesScreen = () => {
         </Animated.View>
 
         <View className={isDesktop || isTablet ? "flex-row justify-between" : ""}>
-          {/* Points Card */}
           <Animated.View entering={FadeInDown.delay(100).duration(600)} className={`${isDesktop || isTablet ? 'w-[30%]' : 'w-full'} bg-primary/5 border border-primary/10 p-8 rounded-[40px] mb-10 items-center`}>
             <View className="bg-white p-4 rounded-3xl shadow-sm mb-4">
               <Star size={32} color="#D4AF37" fill="#D4AF37" />
@@ -163,7 +206,6 @@ const GamesScreen = () => {
             <Text className="text-gray-500 font-bold text-xs uppercase tracking-widest mt-1">Total Points</Text>
           </Animated.View>
 
-          {/* Badges Section */}
           <Animated.View entering={FadeInDown.delay(200).duration(600)} className={`${isDesktop || isTablet ? 'w-[65%]' : 'w-full'} mb-10`}>
             <View className="flex-row items-center justify-center mb-6">
               <Medal size={24} color="#D4AF37" />
@@ -171,25 +213,22 @@ const GamesScreen = () => {
             </View>
             
             <View className="flex-row flex-wrap justify-center gap-4">
-              {[
-                { title: 'Early Bird', desc: 'Logged mood 7 days in a row', active: true },
-                { title: 'Zen Master', desc: 'Popped 100 anxiety bubbles', active: true },
-                { title: 'Mind Reader', desc: 'Perfect score in Mood Match', active: false },
-                { title: 'Cycle Sync', desc: 'Logged full cycle', active: false },
-              ].map((badge, i) => (
-                <View key={i} className={`${isDesktop ? 'w-[23%]' : 'w-[45%]'} bg-white border border-gray-100 p-5 rounded-[32px] items-center shadow-sm ${badge.active ? 'opacity-100' : 'opacity-40'}`}>
-                  <View className="w-12 h-12 bg-primary/10 rounded-full items-center justify-center mb-3">
-                    <Medal size={24} color="#8B004A" />
+              {badgeDefinitions.map((badge, i) => {
+                const isActive = badges.includes(badge.id);
+                return (
+                  <View key={i} className={`${isDesktop ? 'w-[23%]' : 'w-[45%]'} bg-white border border-gray-100 p-5 rounded-[32px] items-center shadow-sm ${isActive ? 'opacity-100' : 'opacity-40'}`}>
+                    <View className="w-12 h-12 bg-primary/10 rounded-full items-center justify-center mb-3">
+                      <Medal size={24} color="#8B004A" />
+                    </View>
+                    <Text className="text-sm font-bold text-gray-900 font-outfit text-center">{badge.title}</Text>
+                    <Text className="text-[10px] text-gray-400 font-inter text-center mt-1">{badge.desc}</Text>
                   </View>
-                  <Text className="text-sm font-bold text-gray-900 font-outfit text-center">{badge.title}</Text>
-                  <Text className="text-[10px] text-gray-400 font-inter text-center mt-1">{badge.desc}</Text>
-                </View>
-              ))}
+                );
+              })}
             </View>
           </Animated.View>
         </View>
 
-        {/* Arcade Games */}
         <Animated.View entering={FadeInUp.delay(300).duration(800)} className="mb-12">
           <View className="flex-row items-center justify-center mb-6">
             <Trophy size={24} color="#7CB69E" />
@@ -197,7 +236,6 @@ const GamesScreen = () => {
           </View>
 
           <View className={`flex-row flex-wrap ${isDesktop || isTablet ? 'justify-between' : 'justify-center'} gap-y-6`}>
-            {/* Mood Match */}
             <TouchableOpacity 
               activeOpacity={0.9}
               onPress={startMoodMatch}
@@ -212,7 +250,6 @@ const GamesScreen = () => {
               </View>
             </TouchableOpacity>
 
-            {/* Bubble Pop */}
             <TouchableOpacity 
               activeOpacity={0.9}
               onPress={startBubblePop}
@@ -231,7 +268,6 @@ const GamesScreen = () => {
         </View>
       </ScrollView>
 
-      {/* Game Modals */}
       <Modal visible={activeGame !== null} animationType="slide">
         <SafeAreaView className="flex-1 bg-[#F2EFE7]">
           <View className="flex-row items-center justify-between px-6 py-4 bg-white shadow-sm z-10">
@@ -333,7 +369,6 @@ const GamesScreen = () => {
           </View>
         </SafeAreaView>
       </Modal>
-
     </SafeAreaView>
   );
 };

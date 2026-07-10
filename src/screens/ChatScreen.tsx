@@ -5,8 +5,8 @@ import * as Speech from 'expo-speech';
 import Animated, { FadeInDown, FadeInRight, FadeInLeft } from 'react-native-reanimated';
 import GlassCard from '../components/GlassCard';
 import { useAuth } from '../context/AuthContext';
-import { createChatSession, saveMessage, getChatHistory, getAiResponse } from '../services/chatService';
-import { getProfile } from '../services/profile';
+import { createChatSession, saveMessage, getChatHistory, getAiResponse } from '../services/api';
+import { getProfile } from '../services/api';
 import { getCurrentPhase } from '../utils/cycle';
 import { useResponsive } from '../hooks/useResponsive';
 

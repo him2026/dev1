@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, SafeAreaView, Switch, Alert, ActivityIndicator } from 'react-native';
 import { User, Mail, Calendar, Hash, Bell, Palette, Trash2, ChevronRight, LogOut } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
-import { getProfile, updateProfile, deleteAccount } from '../services/profile';
+import { getProfile, updateProfile, deleteAccount } from '../services/api';
 import { useResponsive } from '../hooks/useResponsive';
 import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
 

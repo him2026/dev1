@@ -4,7 +4,7 @@ import { Book, Fire, Check } from 'lucide-react-native';
 import Slider from '@react-native-community/slider';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { useAuth } from '../context/AuthContext';
-import { saveMoodLog } from '../services/moodLog';
+import { saveMoodLog } from '../services/api';
 import { useNavigation } from '@react-navigation/native';
 import { useResponsive } from '../hooks/useResponsive';
 

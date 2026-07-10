@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from 'react-native';
 import { Mail, ChevronLeft, Heart, CheckCircle } from 'lucide-react-native';
-import { resetPassword } from '../services/auth';
+import { resetPassword } from '../services/api';
 import { useResponsive } from '../hooks/useResponsive';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 

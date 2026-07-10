@@ -4,8 +4,8 @@ import { Droplet, Calendar as CalendarIcon, Check, ChevronLeft } from 'lucide-re
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { useAuth } from '../context/AuthContext';
-import { savePeriodLog } from '../services/periodLog';
-import { getProfile } from '../services/profile';
+import { savePeriodLog } from '../services/api';
+import { getProfile } from '../services/api';
 import { useResponsive } from '../hooks/useResponsive';
 
 const LogPeriodScreen = ({ navigation }: any) => {

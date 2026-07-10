@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DbUser } from '../types/database';
-import { loginUser, registerUser } from '../services/auth';
+import { loginUser, registerUser } from '../services/api';
 
 interface AuthContextData {
   user: DbUser | null;

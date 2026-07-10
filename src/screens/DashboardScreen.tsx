@@ -18,8 +18,7 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import GlassCard from '../components/GlassCard';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
-import { getProfile } from '../services/profile';
-import { getRecentMoodLogs } from '../services/moodLog';
+import { getProfile, getRecentMoodLogs } from '../services/api';
 import { getCurrentPhase } from '../utils/cycle';
 import { useResponsive } from '../hooks/useResponsive';
 
@@ -55,6 +54,8 @@ const DashboardScreen = () => {
   const [daysUntil, setDaysUntil] = useState(0);
   const [streak, setStreak] = useState(0);
   const [phase, setPhase] = useState('follicular');
+  const [points, setPoints] = useState(0);
+  const [healthScore, setHealthScore] = useState(0);
   const { isDesktop, isTablet, contentPadding, maxContentWidth } = useResponsive();
 
   useEffect(() => {
@@ -63,9 +64,10 @@ const DashboardScreen = () => {
 
   const loadData = async () => {
     try {
-      const { cycleSettings } = await getProfile(user!.id);
+      const { user: dbUser, cycleSettings } = await getProfile(user!.id);
       
-      // Calculate days until next period
+      setPoints(dbUser.points || 0);
+
       if (cycleSettings.next_predicted_date) {
         const nextDate = new Date(cycleSettings.next_predicted_date);
         const today = new Date();
@@ -73,20 +75,18 @@ const DashboardScreen = () => {
         setDaysUntil(Math.max(0, diff));
       }
 
-      // Determine current phase
       if (cycleSettings.last_period_start) {
         const currentPhase = getCurrentPhase(
           cycleSettings.last_period_start,
-          cycleSettings.avg_cycle_length,
-          cycleSettings.avg_period_length
+          cycleSettings.avg_cycle_length || 28,
+          cycleSettings.avg_period_length || 5
         );
         setPhase(currentPhase);
       }
 
-      // Calculate mood streak
       const moodLogs = await getRecentMoodLogs(user!.id, 30);
+      let currentStreak = 0;
       if (moodLogs.length > 0) {
-        let currentStreak = 0;
         const today = new Date();
         for (let i = 0; i < moodLogs.length; i++) {
           const logDate = new Date(moodLogs[i].log_date);
@@ -100,6 +100,9 @@ const DashboardScreen = () => {
         }
         setStreak(currentStreak);
       }
+      
+      setHealthScore(Math.min(100, 50 + currentStreak * 5 + (moodLogs.length > 0 ? 10 : 0)));
+      
     } catch (error) {
       console.error('Dashboard load error:', error);
     } finally {
@@ -134,7 +137,6 @@ const DashboardScreen = () => {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View style={{ maxWidth: maxContentWidth, width: '100%', alignSelf: 'center', paddingHorizontal: contentPadding }}>
           
-        {/* Profile Header */}
         <View className="px-6 pt-10 pb-8 flex-row justify-between items-end">
           <View>
             <Animated.Text entering={FadeInDown.duration(600)} className="text-gray-500 font-inter text-sm mb-1 uppercase tracking-widest">Welcome Back</Animated.Text>
@@ -145,10 +147,8 @@ const DashboardScreen = () => {
           </Animated.View>
         </View>
 
-        {/* Phase Highlight Banner */}
         <Animated.View entering={FadeInUp.delay(300).duration(800)} className="px-6 mb-10">
           <TouchableOpacity activeOpacity={0.9} className="bg-primary p-8 rounded-4xl shadow-premium relative overflow-hidden">
-            {/* Background Decorative Circles */}
             <View className="absolute top-[-20] right-[-20] w-32 h-32 bg-white/10 rounded-full" />
             <View className="absolute bottom-[-40] left-[-20] w-48 h-48 bg-white/5 rounded-full" />
             
@@ -175,11 +175,10 @@ const DashboardScreen = () => {
           </TouchableOpacity>
         </Animated.View>
 
-        {/* Stats Grid */}
         <Animated.View entering={FadeInUp.delay(400).duration(800)} className="px-6 mb-12">
           <View className="flex-row justify-between mb-6">
             <Text className="text-xl font-bold text-gray-900 font-outfit">Your Insights</Text>
-            <TouchableOpacity><Text className="text-primary font-bold text-sm">View All</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Insights')}><Text className="text-primary font-bold text-sm">View All</Text></TouchableOpacity>
           </View>
           
           <View className={`flex-row flex-wrap justify-between gap-y-4`}>
@@ -208,7 +207,7 @@ const DashboardScreen = () => {
                 <View className="w-12 h-12 rounded-3xl items-center justify-center mb-4 bg-white shadow-soft">
                   <HeartPulse size={24} color="#D4AF37" />
                 </View>
-                <Text className="text-2xl font-bold text-gray-900 font-outfit">--</Text>
+                <Text className="text-2xl font-bold text-gray-900 font-outfit">{healthScore}</Text>
                 <Text className="text-[11px] text-gray-500 font-inter uppercase tracking-widest mt-1">Health Score</Text>
               </GlassCard>
             </View>
@@ -218,14 +217,13 @@ const DashboardScreen = () => {
                 <View className="w-12 h-12 rounded-3xl items-center justify-center mb-4 bg-white shadow-soft">
                   <Star size={24} color="#8B004A" />
                 </View>
-                <Text className="text-2xl font-bold text-gray-900 font-outfit">--</Text>
+                <Text className="text-2xl font-bold text-gray-900 font-outfit">{points}</Text>
                 <Text className="text-[11px] text-gray-500 font-inter uppercase tracking-widest mt-1">HIM Points</Text>
               </GlassCard>
             </View>
           </View>
         </Animated.View>
 
-        {/* Action Center */}
         <Animated.View entering={FadeInUp.delay(500).duration(800)} className="px-6 mb-12">
           <Text className="text-xl font-bold text-gray-900 font-outfit mb-6">Action Center</Text>
           <View className="flex-row justify-between">
@@ -248,7 +246,6 @@ const DashboardScreen = () => {
           </View>
         </Animated.View>
 
-        {/* Daily Insight Card */}
         <Animated.View entering={FadeInUp.delay(600).duration(800)} className="px-6 pb-20">
           <View className="bg-white/90 p-8 rounded-5xl border border-white shadow-soft relative overflow-hidden">
             <View className="flex-row items-center mb-6">
