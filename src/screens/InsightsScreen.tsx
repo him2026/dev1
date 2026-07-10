@@ -1,41 +1,47 @@
 import React from 'react';
-import { View, Text, ScrollView, SafeAreaView, Dimensions } from 'react-native';
+import { View, Text, ScrollView, SafeAreaView, Dimensions, StatusBar, TouchableOpacity } from 'react-native';
 import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
-import { ChartLine, AlertTriangle, Table as TableIcon } from 'lucide-react-native';
+import { ChartLine, AlertTriangle, Table as TableIcon, ChevronLeft, Calendar, TrendingUp } from 'lucide-react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import GlassCard from '../components/GlassCard';
+import { useResponsive } from '../hooks/useResponsive';
 
-const screenWidth = Dimensions.get('window').width;
-
-const InsightsScreen = () => {
+const InsightsScreen = ({ navigation }: any) => {
+  const { width: screenWidth, isDesktop, contentPadding, maxContentWidth } = useResponsive();
   const chartConfig = {
     backgroundGradientFrom: '#ffffff',
     backgroundGradientTo: '#ffffff',
-    color: (opacity = 1) => `rgba(255, 112, 150, ${opacity})`,
-    strokeWidth: 2,
-    barPercentage: 0.5,
+    backgroundGradientFromOpacity: 0,
+    backgroundGradientToOpacity: 0,
+    color: (opacity = 1) => `rgba(139, 0, 74, ${opacity})`,
+    strokeWidth: 3,
+    barPercentage: 0.6,
     useShadowColorFromDataset: false,
     decimalPlaces: 0,
-    labelColor: (opacity = 1) => `rgba(156, 163, 175, ${opacity})`,
+    labelColor: (opacity = 1) => `rgba(139, 0, 74, ${opacity * 0.6})`,
+    fillShadowGradientFrom: '#8B004A',
+    fillShadowGradientTo: '#E6D3DB',
+    fillShadowGradientFromOpacity: 0.2,
+    fillShadowGradientToOpacity: 0.05,
     propsForDots: {
-      r: "4",
+      r: "6",
       strokeWidth: "2",
-      stroke: "#FF7096"
+      stroke: "#ffffff"
     }
   };
 
   const moodData = {
-    labels: ["May 01", "May 02", "May 03", "May 04"],
+    labels: ["01", "02", "03", "04"],
     datasets: [{
       data: [3, 4, 2, 5],
-      color: (opacity = 1) => `rgba(255, 112, 150, ${opacity})`,
-      strokeWidth: 2
     }]
   };
 
   const symptomData = [
-    { name: 'Cramps', population: 40, color: '#FF85A1', legendFontColor: '#7F7F7F', legendFontSize: 10 },
-    { name: 'Headache', population: 20, color: '#FFB3C6', legendFontColor: '#7F7F7F', legendFontSize: 10 },
-    { name: 'Bloating', population: 15, color: '#FFC8DD', legendFontColor: '#7F7F7F', legendFontSize: 10 },
-    { name: 'Fatigue', population: 25, color: '#C9A8E8', legendFontColor: '#7F7F7F', legendFontSize: 10 },
+    { name: 'Cramps', population: 40, color: '#8B004A', legendFontColor: '#4B5563', legendFontSize: 11 },
+    { name: 'Headache', population: 20, color: '#A93226', legendFontColor: '#4B5563', legendFontSize: 11 },
+    { name: 'Bloating', population: 15, color: '#D4AF37', legendFontColor: '#4B5563', legendFontSize: 11 },
+    { name: 'Fatigue', population: 25, color: '#E6D3DB', legendFontColor: '#4B5563', legendFontSize: 11 },
   ];
 
   const cycleData = {
@@ -46,94 +52,121 @@ const InsightsScreen = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <ScrollView className="flex-1 px-6 pt-4" showsVerticalScrollIndicator={false}>
-        
+    <SafeAreaView className="flex-1 bg-background">
+      <StatusBar barStyle="dark-content" />
+      
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: contentPadding }} showsVerticalScrollIndicator={false}>
+        <View style={{ maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' }}>
+          
         {/* Header */}
-        <View className="items-center mb-10">
-          <View className="flex-row items-center mb-2">
-            <ChartLine size={28} color="#9B8EC0" />
-            <Text className="text-3xl font-bold font-outfit ml-3">Health Insights</Text>
+        <View className="flex-row items-center justify-between px-8 py-8">
+          <TouchableOpacity onPress={() => navigation?.goBack()} className="bg-white p-3 rounded-2xl shadow-soft">
+            <ChevronLeft size={24} color="#8B004A" />
+          </TouchableOpacity>
+          <View className="items-center">
+            <Text className="text-xl font-bold font-outfit tracking-tight">Health Analytics</Text>
+            <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-[2px]">Data Insights</Text>
           </View>
-          <Text className="text-gray-500 font-inter text-center">Visual analytics of your wellness patterns</Text>
+          <TouchableOpacity className="bg-white p-3 rounded-2xl shadow-soft">
+            <Calendar size={20} color="#8B004A" />
+          </TouchableOpacity>
         </View>
 
-        {/* Summary Cards */}
-        <View className="flex-row flex-wrap justify-between gap-y-4 mb-10">
-          <View className="w-[48%] bg-white border border-gray-100 p-6 rounded-[32px] items-center shadow-sm">
-            <Text className="text-[10px] font-bold text-gray-400 uppercase mb-2">Total Cycles</Text>
-            <Text className="text-3xl font-bold text-primary font-outfit">12</Text>
+        {/* Summary Overview */}
+        <Animated.View entering={FadeInUp.duration(600)} className="px-6 mb-10">
+          <View className="flex-row justify-between gap-x-4">
+            <View className="flex-1">
+              <GlassCard intensity={40} style={{ padding: 24, borderRadius: 40 }}>
+                <Text className="text-[10px] font-bold text-primary/60 uppercase tracking-widest mb-3">Total Cycles</Text>
+                <View className="flex-row items-end">
+                  <Text className="text-4xl font-bold text-gray-900 font-outfit tracking-tighter">12</Text>
+                  <Text className="text-gray-400 font-inter text-xs mb-1.5 ml-2">Logged</Text>
+                </View>
+              </GlassCard>
+            </View>
+            <View className="flex-1">
+              <GlassCard intensity={40} style={{ padding: 24, borderRadius: 40 }}>
+                <Text className="text-[10px] font-bold text-secondary/60 uppercase tracking-widest mb-3">Avg Length</Text>
+                <View className="flex-row items-end">
+                  <Text className="text-4xl font-bold text-gray-900 font-outfit tracking-tighter">28</Text>
+                  <Text className="text-gray-400 font-inter text-xs mb-1.5 ml-1">Days</Text>
+                </View>
+              </GlassCard>
+            </View>
           </View>
-          <View className="w-[48%] bg-white border border-gray-100 p-6 rounded-[32px] items-center shadow-sm">
-            <Text className="text-[10px] font-bold text-gray-400 uppercase mb-2">Avg Length</Text>
-            <Text className="text-3xl font-bold text-secondary font-outfit">28d</Text>
-          </View>
-        </View>
+        </Animated.View>
 
         {/* Mood Trend */}
-        <View className="bg-white border border-gray-100 p-8 rounded-[40px] mb-8 shadow-sm">
-          <Text className="text-lg font-bold text-gray-900 font-outfit mb-6 text-center">Mood Trend (30 Days)</Text>
-          <LineChart
-            data={moodData}
-            width={screenWidth - 80}
-            height={220}
-            chartConfig={chartConfig}
-            bezier
-            style={{ borderRadius: 16, paddingRight: 40 }}
-          />
-        </View>
+        <Animated.View entering={FadeInUp.delay(200)} className="px-6 mb-8">
+          <View className="bg-white p-8 rounded-5xl shadow-soft border border-white">
+            <View className="flex-row justify-between items-center mb-8">
+              <Text className="text-xl font-bold text-gray-900 font-outfit tracking-tight">Mood Evolution</Text>
+              <TrendingUp size={20} color="#8B004A" />
+            </View>
+            <LineChart
+              data={moodData}
+              width={isDesktop ? 800 : screenWidth - 88}
+              height={220}
+              chartConfig={chartConfig}
+              bezier
+              withInnerLines={false}
+              withOuterLines={false}
+              style={{ borderRadius: 16, marginLeft: -20 }}
+            />
+          </View>
+        </Animated.View>
 
         {/* Symptom Distribution */}
-        <View className="bg-white border border-gray-100 p-8 rounded-[40px] mb-8 shadow-sm">
-          <Text className="text-lg font-bold text-gray-900 font-outfit mb-6 text-center">Symptom Distribution</Text>
-          <PieChart
-            data={symptomData}
-            width={screenWidth - 80}
-            height={220}
-            chartConfig={chartConfig}
-            accessor={"population"}
-            backgroundColor={"transparent"}
-            paddingLeft={"15"}
-            center={[10, 0]}
-            absolute
-          />
-        </View>
-
-        {/* Cycle History */}
-        <View className="bg-white border border-gray-100 p-8 rounded-[40px] mb-8 shadow-sm">
-          <Text className="text-lg font-bold text-gray-900 font-outfit mb-6 text-center">Cycle Length History</Text>
-          <BarChart
-            data={cycleData}
-            width={screenWidth - 80}
-            height={220}
-            yAxisLabel=""
-            yAxisSuffix="d"
-            chartConfig={chartConfig}
-            style={{ borderRadius: 16, paddingRight: 40 }}
-          />
-        </View>
-
-        {/* Period History Table */}
-        <View className="bg-white border border-gray-100 p-8 rounded-[40px] mb-12 shadow-sm">
-          <View className="flex-row items-center justify-center mb-6">
-            <TableIcon size={20} color="#FF7096" />
-            <Text className="text-lg font-bold text-gray-900 font-outfit ml-2">Period History</Text>
+        <Animated.View entering={FadeInUp.delay(400)} className="px-6 mb-8">
+          <View className="bg-white p-8 rounded-5xl shadow-soft border border-white">
+            <Text className="text-xl font-bold text-gray-900 font-outfit tracking-tight mb-8">Symptom Distribution</Text>
+            <PieChart
+              data={symptomData}
+              width={isDesktop ? 800 : screenWidth - 80}
+              height={200}
+              chartConfig={chartConfig}
+              accessor={"population"}
+              backgroundColor={"transparent"}
+              paddingLeft={"15"}
+              center={[10, 0]}
+              absolute
+            />
           </View>
-          
-          <View className="gap-y-4">
-            <View className="flex-row justify-between border-b border-gray-50 pb-3">
-              <Text className="text-xs font-bold text-gray-400 uppercase">Dates</Text>
-              <Text className="text-xs font-bold text-gray-400 uppercase">Days</Text>
-            </View>
-            {[1, 2, 3].map((i) => (
-              <View key={i} className="flex-row justify-between items-center py-2">
-                <Text className="text-sm font-bold text-gray-900">May 01 — May 05</Text>
-                <Text className="text-sm text-gray-500 font-inter">5 days</Text>
+        </Animated.View>
+
+        {/* Cycle History Table */}
+        <Animated.View entering={FadeInUp.delay(600).duration(800)} className="px-6 pb-20">
+          <View className="bg-white p-10 rounded-5xl shadow-soft border border-white">
+            <View className="flex-row items-center mb-10">
+              <View className="bg-primary/5 p-3 rounded-2xl mr-4">
+                <TableIcon size={24} color="#8B004A" />
               </View>
-            ))}
+              <Text className="text-xl font-bold text-gray-900 font-outfit tracking-tight">Cycle History</Text>
+            </View>
+            
+            <View className="gap-y-6">
+              {[
+                { date: 'May 01 — May 05', days: '5 Days', status: 'Regular' },
+                { date: 'Apr 03 — Apr 08', days: '6 Days', status: 'Regular' },
+                { date: 'Mar 05 — Mar 10', days: '5 Days', status: 'Late' },
+              ].map((row, i) => (
+                <View key={i} className={`flex-row justify-between items-center pb-6 ${i !== 2 ? 'border-b border-gray-50' : ''}`}>
+                  <View>
+                    <Text className="text-base font-bold text-gray-900 font-outfit">{row.date}</Text>
+                    <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">{row.days} Flow Duration</Text>
+                  </View>
+                  <View className={`px-4 py-1.5 rounded-full ${row.status === 'Late' ? 'bg-secondary/10' : 'bg-primary/10'}`}>
+                    <Text className={`text-[10px] font-bold uppercase tracking-widest ${row.status === 'Late' ? 'text-secondary' : 'text-primary'}`}>
+                      {row.status}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
           </View>
-        </View>
+        </Animated.View>
 
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

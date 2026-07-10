@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, SafeAreaView, Image } from 'react-native';
 import { Link, Shield, Users, CheckCircle, ChevronLeft, Mail, Info } from 'lucide-react-native';
+import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
+import { useResponsive } from '../hooks/useResponsive';
 
 const PartnerModeScreen = ({ navigation }: any) => {
   const [partnerEmail, setPartnerEmail] = useState('');
+  const { maxContentWidth, contentPadding } = useResponsive();
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <ScrollView className="flex-1 px-6 pt-4" showsVerticalScrollIndicator={false}>
-        
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: contentPadding, paddingTop: 16 }} showsVerticalScrollIndicator={false}>
+        <View style={{ maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' }}>
+          
         {/* Header */}
         <View className="flex-row items-center justify-between mb-8">
           <TouchableOpacity onPress={() => navigation?.goBack()} className="p-2 -ml-2">
@@ -23,14 +27,14 @@ const PartnerModeScreen = ({ navigation }: any) => {
           <View className="w-10" />
         </View>
 
-        <View className="items-center mb-10">
+        <Animated.View entering={FadeInDown.duration(600)} className="items-center mb-10">
           <Text className="text-gray-500 font-inter text-center px-4">
             Sync your cycle with a partner to foster understanding and ensure you have support exactly when you need it.
           </Text>
-        </View>
+        </Animated.View>
 
         {/* Connect Card */}
-        <View className="bg-blue-50/50 border border-blue-100 p-8 rounded-[40px] mb-8">
+        <Animated.View entering={FadeInUp.delay(200).duration(600)} className="bg-blue-50/50 border border-blue-100 p-8 rounded-[40px] mb-8">
           <View className="flex-row items-center mb-4">
             <View className="bg-blue-500 p-3 rounded-2xl mr-4">
               <Link size={24} color="white" />
@@ -58,18 +62,18 @@ const PartnerModeScreen = ({ navigation }: any) => {
           <TouchableOpacity className="bg-blue-500 p-5 rounded-2xl flex-row items-center justify-center">
             <Text className="text-white font-bold font-outfit">Send Invite</Text>
           </TouchableOpacity>
-        </View>
+        </Animated.View>
 
         {/* Privacy Note */}
-        <View className="flex-row bg-blue-50 p-6 rounded-3xl mb-10 items-center">
+        <Animated.View entering={FadeInUp.delay(300).duration(600)} className="flex-row bg-blue-50 p-6 rounded-3xl mb-10 items-center">
           <Shield size={20} color="#3B82F6" />
           <Text className="flex-1 ml-3 text-[11px] text-blue-700 font-inter leading-5">
             Your partner will <Text className="font-bold">only</Text> see your current phase name and wellness tips. Detailed logs remain private.
           </Text>
-        </View>
+        </Animated.View>
 
         {/* Benefits */}
-        <View className="mb-12">
+        <Animated.View entering={FadeInUp.delay(400).duration(600)} className="mb-12">
           <Text className="text-lg font-bold text-gray-900 font-outfit mb-6">Why use Partner Mode?</Text>
           
           <View className="gap-y-6">
@@ -103,8 +107,9 @@ const PartnerModeScreen = ({ navigation }: any) => {
               </View>
             </View>
           </View>
-        </View>
+        </Animated.View>
 
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

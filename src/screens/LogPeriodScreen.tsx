@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, SafeAreaView, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, SafeAreaView, Platform, Alert, ActivityIndicator } from 'react-native';
 import { Droplet, Calendar as CalendarIcon, Check, ChevronLeft } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import Animated, { FadeInUp } from 'react-native-reanimated';
+import { useAuth } from '../context/AuthContext';
+import { savePeriodLog } from '../services/periodLog';
+import { getProfile } from '../services/profile';
+import { useResponsive } from '../hooks/useResponsive';
 
 const LogPeriodScreen = ({ navigation }: any) => {
   const [startDate, setStartDate] = useState(new Date());
@@ -11,6 +16,9 @@ const LogPeriodScreen = ({ navigation }: any) => {
   const [severity, setSeverity] = useState('mild');
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
+  const { maxContentWidth, contentPadding } = useResponsive();
 
   const [symptoms, setSymptoms] = useState({
     cramps: false,
@@ -27,9 +35,36 @@ const LogPeriodScreen = ({ navigation }: any) => {
     setSymptoms({ ...symptoms, [key]: !symptoms[key] });
   };
 
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      if (user) {
+        const { cycleSettings } = await getProfile(user.id);
+        await savePeriodLog(
+          user.id,
+          startDate.toISOString().split('T')[0],
+          endDate ? endDate.toISOString().split('T')[0] : null,
+          flow,
+          symptoms,
+          severity,
+          notes,
+          cycleSettings
+        );
+        Alert.alert('Success', 'Period logged successfully', [
+          { text: 'OK', onPress: () => navigation.goBack() }
+        ]);
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <ScrollView className="flex-1 px-6 pt-4" showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: contentPadding, paddingTop: 16 }} showsVerticalScrollIndicator={false}>
+        <View style={{ maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' }}>
         
         {/* Header */}
         <View className="flex-row items-center justify-between mb-8">
@@ -44,7 +79,7 @@ const LogPeriodScreen = ({ navigation }: any) => {
         </View>
 
         {/* Date Selectors */}
-        <View className="flex-row gap-x-4 mb-8">
+        <Animated.View entering={FadeInUp.delay(100)} className="flex-row gap-x-4 mb-8">
           <TouchableOpacity 
             onPress={() => setShowStartPicker(true)}
             className="flex-1 bg-gray-50 border border-gray-100 p-5 rounded-3xl items-center"
@@ -62,7 +97,7 @@ const LogPeriodScreen = ({ navigation }: any) => {
             <Text className="text-[10px] font-bold text-gray-400 uppercase mt-2 mb-1">End Date</Text>
             <Text className="text-sm font-bold text-gray-900">{endDate ? endDate.toLocaleDateString() : 'Ongoing'}</Text>
           </TouchableOpacity>
-        </View>
+        </Animated.View>
 
         {/* Date Pickers (Conditional) */}
         {showStartPicker && (
@@ -87,7 +122,7 @@ const LogPeriodScreen = ({ navigation }: any) => {
         )}
 
         {/* Flow Intensity */}
-        <View className="mb-8">
+        <Animated.View entering={FadeInUp.delay(200)} className="mb-8">
           <Text className="text-lg font-bold text-gray-900 font-outfit mb-4">Flow Intensity</Text>
           <View className="flex-row justify-between">
             {['light', 'medium', 'heavy'].map((f) => (
@@ -101,10 +136,10 @@ const LogPeriodScreen = ({ navigation }: any) => {
               </TouchableOpacity>
             ))}
           </View>
-        </View>
+        </Animated.View>
 
         {/* Symptoms */}
-        <View className="mb-8">
+        <Animated.View entering={FadeInUp.delay(300)} className="mb-8">
           <Text className="text-lg font-bold text-gray-900 font-outfit mb-4">Symptoms</Text>
           <View className="flex-row flex-wrap gap-3">
             {Object.keys(symptoms).map((s) => (
@@ -120,10 +155,10 @@ const LogPeriodScreen = ({ navigation }: any) => {
               </TouchableOpacity>
             ))}
           </View>
-        </View>
+        </Animated.View>
 
         {/* Severity */}
-        <View className="mb-8">
+        <Animated.View entering={FadeInUp.delay(400)} className="mb-8">
           <Text className="text-lg font-bold text-gray-900 font-outfit mb-4">Overall Severity</Text>
           <View className="gap-y-3">
             {['mild', 'moderate', 'severe'].map((s) => (
@@ -140,10 +175,10 @@ const LogPeriodScreen = ({ navigation }: any) => {
               </TouchableOpacity>
             ))}
           </View>
-        </View>
+        </Animated.View>
 
         {/* Notes */}
-        <View className="mb-8">
+        <Animated.View entering={FadeInUp.delay(500)} className="mb-8">
           <Text className="text-lg font-bold text-gray-900 font-outfit mb-4">Notes (optional)</Text>
           <TextInput
             className="bg-gray-50 rounded-3xl p-6 text-gray-900 font-inter min-h-[120px] border border-gray-100"
@@ -153,14 +188,28 @@ const LogPeriodScreen = ({ navigation }: any) => {
             value={notes}
             onChangeText={setNotes}
           />
-        </View>
+        </Animated.View>
 
         {/* Save Button */}
-        <TouchableOpacity className="bg-primary p-6 rounded-[24px] flex-row items-center justify-center mb-12 shadow-lg shadow-primary/30">
-          <Check size={24} color="white" />
-          <Text className="text-white font-bold text-lg ml-2 font-outfit">Save Period Log</Text>
-        </TouchableOpacity>
+        <Animated.View entering={FadeInUp.delay(600).springify()}>
+          <TouchableOpacity 
+            activeOpacity={0.8}
+            onPress={handleSave}
+            disabled={loading}
+            className="bg-primary p-5 rounded-[32px] flex-row items-center justify-center mb-10 shadow-lg shadow-primary/30"
+          >
+            {loading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <>
+                <Check size={24} color="white" />
+                <Text className="text-white font-bold text-lg ml-2 font-outfit">Save Period Log</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </Animated.View>
 
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

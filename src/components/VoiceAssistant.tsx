@@ -1,14 +1,22 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
-import { Mic, StopCircle, Heart, Wind, MessageSquare, BookOpen } from 'lucide-react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StatusBar } from 'react-native';
+import { Mic, StopCircle, Heart, Wind, MessageSquare, BookOpen, Sparkles } from 'lucide-react-native';
 import { Conversation } from '@elevenlabs/client';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withRepeat, 
+  withTiming, 
+  withSequence,
+  FadeInDown,
+  FadeInUp
+} from 'react-native-reanimated';
+import GlassCard from './GlassCard';
 
-// Use the same Agent ID as the working PHP version
 const AGENT_ID = 'agent_9101kp14nztefgw986jp2kkyg07f';
 
 interface VoiceAssistantProps {
   phaseColor: string;
-  phaseIcon: string;
   phaseName: string;
 }
 
@@ -16,29 +24,28 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ phaseColor, phaseName }
   const [isListening, setIsListening] = useState(false);
   const [status, setStatus] = useState('Tap to speak');
   const [conversation, setConversation] = useState<any>(null);
-  const [pulseAnim] = useState(new Animated.Value(1));
+  
+  const pulse = useSharedValue(1);
 
-  // Breathing ring animation
   useEffect(() => {
     if (isListening) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.5,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
+      pulse.value = withRepeat(
+        withSequence(
+          withTiming(1.4, { duration: 1000 }),
+          withTiming(1, { duration: 1000 })
+        ),
+        -1,
+        true
+      );
     } else {
-      pulseAnim.setValue(1);
+      pulse.value = 1;
     }
   }, [isListening]);
+
+  const animatedPulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulse.value }],
+    opacity: withTiming(isListening ? 0.4 : 0),
+  }));
 
   const toggleConversation = useCallback(async () => {
     if (isListening) {
@@ -62,15 +69,11 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ phaseColor, phaseName }
           },
           onError: (error: any) => {
             console.error('ConvAI Error:', error);
-            setStatus('Failed to connect. Try again.');
+            setStatus('Connection Error');
             setIsListening(false);
           },
           onModeChange: (mode: any) => {
-            if (mode.mode === 'speaking') {
-              setStatus('HIM is speaking...');
-            } else {
-              setStatus('Listening...');
-            }
+            setStatus(mode.mode === 'speaking' ? 'HIM is speaking...' : 'Listening...');
           },
         });
         setConversation(conv);
@@ -82,61 +85,63 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ phaseColor, phaseName }
   }, [isListening, conversation]);
 
   return (
-    <View className="flex-1 items-center py-10 bg-white">
-      <View className="mb-10 items-center">
-        <Text className="text-3xl font-bold text-gray-900 mb-2 font-outfit">Voice Assistant</Text>
-        <Text className="text-lg text-gray-500 mb-4 font-inter text-center px-6">
-          I'm here for you. Just speak, and I'll listen.
-        </Text>
-        <View 
-          className="px-4 py-2 rounded-full flex-row items-center" 
-          style={{ backgroundColor: `${phaseColor}20` }}
-        >
-          <Text style={{ color: phaseColor }} className="font-bold font-inter uppercase tracking-widest text-xs">
-            {phaseName}
-          </Text>
+    <View className="flex-1 items-center px-8 bg-background">
+      <StatusBar barStyle="dark-content" />
+      
+      <Animated.View entering={FadeInDown.duration(800)} className="items-center mt-12 mb-16">
+        <View className="bg-white p-5 rounded-4xl shadow-soft mb-8">
+          <Sparkles size={32} color="#8B004A" />
         </View>
-      </View>
+        <Text className="text-4xl font-bold text-gray-900 font-outfit tracking-tighter text-center">Voice Companion</Text>
+        <Text className="text-base text-gray-500 mt-3 font-inter text-center leading-6">
+          I'm here for you Sarah. Just speak, and I'll listen with empathy.
+        </Text>
+      </Animated.View>
 
-      <View className="relative justify-center items-center h-40 w-40">
-        {isListening && (
-          <Animated.View 
-            style={{ 
-              transform: [{ scale: pulseAnim }],
-              borderColor: phaseColor,
-              opacity: 0.3
-            }}
-            className="absolute w-40 h-40 rounded-full border-4"
-          />
-        )}
+      <View className="relative justify-center items-center h-56 w-56 mb-12">
+        <Animated.View 
+          style={[
+            animatedPulseStyle,
+            { 
+              width: 180, 
+              height: 180, 
+              borderRadius: 90, 
+              borderWidth: 4, 
+              borderColor: '#8B004A',
+              position: 'absolute'
+            }
+          ]}
+        />
         <TouchableOpacity 
           onPress={toggleConversation}
-          className={`w-24 h-24 rounded-full items-center justify-center shadow-lg ${isListening ? 'bg-red-500' : 'bg-primary'}`}
-          style={!isListening ? { backgroundColor: '#FF7096' } : {}}
+          activeOpacity={0.9}
+          className={`w-32 h-32 rounded-full items-center justify-center shadow-premium ${isListening ? 'bg-secondary' : 'bg-primary'}`}
         >
           {isListening ? (
-            <StopCircle size={40} color="white" />
+            <StopCircle size={48} color="white" fill="white" />
           ) : (
-            <Mic size={40} color="white" />
+            <Mic size={48} color="white" />
           )}
         </TouchableOpacity>
       </View>
       
-      <Text className="mt-8 text-gray-400 font-medium font-inter">{status}</Text>
+      <View className="bg-white px-8 py-3 rounded-full border border-white shadow-soft">
+        <Text className="text-primary font-bold font-inter text-xs uppercase tracking-widest">{status}</Text>
+      </View>
 
-      <View className="flex-row flex-wrap justify-center gap-4 mt-12 px-6">
-        <TouchableOpacity className="bg-white border border-gray-100 p-6 rounded-2xl items-center w-32 shadow-sm">
-          <Wind size={24} color="#FF7096" />
-          <Text className="mt-2 text-xs font-semibold text-gray-600 font-inter">Breathing</Text>
-        </TouchableOpacity>
-        <TouchableOpacity className="bg-white border border-gray-100 p-6 rounded-2xl items-center w-32 shadow-sm">
-          <MessageSquare size={24} color="#FF7096" />
-          <Text className="mt-2 text-xs font-semibold text-gray-600 font-inter">Chat</Text>
-        </TouchableOpacity>
-        <TouchableOpacity className="bg-white border border-gray-100 p-6 rounded-2xl items-center w-32 shadow-sm">
-          <BookOpen size={24} color="#FF7096" />
-          <Text className="mt-2 text-xs font-semibold text-gray-600 font-inter">Wellness</Text>
-        </TouchableOpacity>
+      <View className="flex-row justify-between w-full mt-20 gap-x-4">
+        {[
+          { icon: Wind, label: 'Breathing', color: '#8B004A' },
+          { icon: MessageSquare, label: 'Chat', color: '#A93226' },
+          { icon: BookOpen, label: 'Wellness', color: '#D4AF37' }
+        ].map((item, i) => (
+          <TouchableOpacity key={i} className="flex-1">
+            <GlassCard intensity={30} style={{ padding: 20, alignItems: 'center', borderRadius: 32 }}>
+              <item.icon size={24} color={item.color} />
+              <Text className="mt-2 text-[10px] font-bold text-gray-600 uppercase tracking-widest">{item.label}</Text>
+            </GlassCard>
+          </TouchableOpacity>
+        ))}
       </View>
     </View>
   );

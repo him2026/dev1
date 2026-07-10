@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, SafeAreaView } from 'react-native';
-import { Book, Fire, Check, Star } from 'lucide-react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, SafeAreaView, Alert, ActivityIndicator } from 'react-native';
+import { Book, Fire, Check } from 'lucide-react-native';
 import Slider from '@react-native-community/slider';
+import Animated, { FadeInUp } from 'react-native-reanimated';
+import { useAuth } from '../context/AuthContext';
+import { saveMoodLog } from '../services/moodLog';
+import { useNavigation } from '@react-navigation/native';
+import { useResponsive } from '../hooks/useResponsive';
 
 const moods = [
   { key: 'happy', emoji: '😊', label: 'Happy', color: '#FFD93D' },
@@ -16,23 +21,55 @@ const moods = [
 
 const MoodJournalScreen = () => {
   const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
-  const [intensity, setIntensity] = useState(5);
+  const [intensity, setIntensity] = useState(3);
   const [notes, setNotes] = useState('');
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const navigation = useNavigation();
+  const { maxContentWidth, contentPadding, isDesktop, isTablet } = useResponsive();
 
-  const toggleMood = (key: string) => {
-    if (selectedMoods.includes(key)) {
-      setSelectedMoods(selectedMoods.filter(m => m !== key));
-    } else if (selectedMoods.length < 3) {
-      setSelectedMoods([...selectedMoods, key]);
+  const toggleMood = (moodId: string) => {
+    if (selectedMoods.includes(moodId)) {
+      setSelectedMoods(selectedMoods.filter(id => id !== moodId));
+    } else {
+      setSelectedMoods([...selectedMoods, moodId]);
+    }
+  };
+
+  const handleSave = async () => {
+    if (selectedMoods.length === 0) {
+      Alert.alert('Error', 'Please select at least one mood');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      if (user) {
+        await saveMoodLog(
+          user.id, 
+          new Date().toISOString().split('T')[0], 
+          selectedMoods, 
+          intensity, 
+          notes
+        );
+        Alert.alert('Success', 'Mood log saved successfully', [
+          { text: 'OK', onPress: () => navigation.goBack() }
+        ]);
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <ScrollView className="flex-1 px-6 pt-4" showsVerticalScrollIndicator={false}>
-        
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: contentPadding, paddingTop: 16 }} showsVerticalScrollIndicator={false}>
+        <View style={{ maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' }}>
+          
         {/* Header */}
-        <View className="flex-row justify-between items-center mb-8">
+        <Animated.View entering={FadeInUp.duration(600)} className="flex-row justify-between items-center mb-8">
           <View>
             <View className="flex-row items-center">
               <Book size={24} color="#9B8EC0" />
@@ -44,14 +81,14 @@ const MoodJournalScreen = () => {
             <Fire size={20} color="#F4A261" />
             <Text className="ml-2 font-bold text-gray-900">5</Text>
           </View>
-        </View>
+        </Animated.View>
 
         {/* Mood Grid */}
-        <View className="mb-8">
+        <Animated.View entering={FadeInUp.delay(200).duration(800)} className="mb-8">
           <View className="flex-row justify-between items-end mb-4">
             <Text className="text-lg font-bold text-gray-900 font-outfit">How are you feeling?</Text>
             <Text className="text-xs font-bold text-primary font-inter px-3 py-1 bg-primary-light rounded-full">
-              {selectedMoods.length} / 3 selected
+              {selectedMoods.length} selected
             </Text>
           </View>
           
@@ -68,10 +105,10 @@ const MoodJournalScreen = () => {
               </TouchableOpacity>
             ))}
           </View>
-        </View>
+        </Animated.View>
 
         {/* Intensity */}
-        <View className="mb-8">
+        <Animated.View entering={FadeInUp.delay(300).duration(800)} className="mb-8">
           <View className="flex-row justify-between items-center mb-4">
             <Text className="text-lg font-bold text-gray-900 font-outfit">Intensity</Text>
             <Text className="text-primary font-bold text-lg">{intensity}</Text>
@@ -91,10 +128,10 @@ const MoodJournalScreen = () => {
             <Text className="text-xs text-gray-400 font-inter">Mild</Text>
             <Text className="text-xs text-gray-400 font-inter">Intense</Text>
           </View>
-        </View>
+        </Animated.View>
 
         {/* Notes */}
-        <View className="mb-8">
+        <Animated.View entering={FadeInUp.delay(400).duration(800)} className="mb-8">
           <Text className="text-lg font-bold text-gray-900 font-outfit mb-4">Journal Entry</Text>
           <TextInput
             className="bg-gray-50 rounded-3xl p-6 text-gray-900 font-inter min-h-[120px] border border-gray-100"
@@ -104,14 +141,25 @@ const MoodJournalScreen = () => {
             value={notes}
             onChangeText={setNotes}
           />
-        </View>
+        </Animated.View>
 
         {/* Save Button */}
-        <TouchableOpacity className="bg-primary p-6 rounded-[24px] flex-row items-center justify-center mb-10 shadow-lg shadow-primary/30">
-          <Check size={24} color="white" />
-          <Text className="text-white font-bold text-lg ml-2 font-outfit">Save Mood</Text>
-        </TouchableOpacity>
+        <Animated.View entering={FadeInUp.delay(500).springify()}>
+          <TouchableOpacity 
+            activeOpacity={0.8}
+            onPress={handleSave}
+            disabled={loading}
+            className="bg-primary p-5 rounded-[32px] items-center mb-10 shadow-lg shadow-primary/30"
+          >
+            {loading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text className="text-white font-bold text-xl font-outfit">Save Journal Entry</Text>
+            )}
+          </TouchableOpacity>
+        </Animated.View>
 
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

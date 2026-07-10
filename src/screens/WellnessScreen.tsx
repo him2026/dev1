@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, Image } from 'react-native';
-import { Spa, Heart, BookOpen, Bell, Droplet, Couch, Bed, Apple, Info, Headphones } from 'lucide-react-native';
+import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, StatusBar, Dimensions } from 'react-native';
+import { Flower2, Heart, BookOpen, Bell, Droplet, Sofa as Couch, Bed, Apple, Info, Headphones, Sparkles, ChevronRight } from 'lucide-react-native';
+import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
+import GlassCard from '../components/GlassCard';
+import { useResponsive } from '../hooks/useResponsive';
 
 const categories = ['All', 'Cycle', 'Nutrition', 'Mental Health', 'Fitness', 'Sleep'];
 
@@ -10,114 +13,124 @@ const articles = [
   { cat: 'Mental Health', tag: 'Mental Health', title: 'How Hormones Affect Your Mood', desc: 'Estrogen, progesterone, serotonin — understand the connection.', read: '7 min' },
 ];
 
-const WellnessScreen = () => {
+const WellnessScreen = ({ navigation }: any) => {
   const [selectedCat, setSelectedCat] = useState('All');
+  const { isDesktop, isTablet, contentPadding, maxContentWidth } = useResponsive();
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <ScrollView className="flex-1 px-6 pt-4" showsVerticalScrollIndicator={false}>
-        
+    <SafeAreaView className="flex-1 bg-background">
+      <StatusBar barStyle="dark-content" />
+      
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: contentPadding }} showsVerticalScrollIndicator={false}>
+        <View style={{ maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' }}>
+          
         {/* Header */}
-        <View className="items-center mb-8">
-          <View className="flex-row items-center mb-2">
-            <Spa size={32} color="#7CB69E" />
-            <Text className="text-3xl font-bold font-outfit ml-3">Wellness Hub</Text>
-          </View>
-          <Text className="text-gray-500 font-inter text-center mb-6">
-            Embrace your <Text className="text-primary font-bold">Menstrual Phase</Text>. Cozy vibes only.
-          </Text>
-          <TouchableOpacity 
-            onPress={() => navigation?.navigate('AudioLibrary')}
-            className="bg-primary-light px-6 py-3 rounded-2xl flex-row items-center"
-          >
-            <Headphones size={18} color="#FF7096" />
-            <Text className="text-primary font-bold text-xs ml-2">Open Media Library</Text>
-          </TouchableOpacity>
+        <View className="px-8 pt-12 pb-10 items-center">
+          <Animated.View entering={FadeInDown.duration(600)} className="bg-primary/5 p-4 rounded-4xl mb-6">
+            <Flower2 size={40} color="#8B004A" />
+          </Animated.View>
+          <Animated.Text entering={FadeInDown.delay(100).duration(600)} className="text-[42px] font-bold text-gray-900 font-outfit tracking-tighter text-center">Wellness Hub</Animated.Text>
+          <Animated.Text entering={FadeInDown.delay(200).duration(600)} className="text-gray-500 font-inter text-center mt-3 leading-6 px-4">
+            Embrace your <Text className="text-primary font-bold">Cycle Rhythm</Text>.{'\n'}Cozy vibes, always.
+          </Animated.Text>
         </View>
 
         {/* Daily Affirmation */}
-        <View className="bg-primary/5 border border-primary/10 p-10 rounded-[40px] mb-8 items-center">
-          <Text className="text-primary font-bold text-xs uppercase tracking-widest mb-4">Daily Affirmation</Text>
-          <Text className="text-2xl font-bold text-gray-900 font-outfit text-center mb-4">I am at peace with my body's natural rhythm.</Text>
-          <Text className="text-gray-500 text-center font-inter leading-6">Today, I choose to listen to what my body needs and provide it with the rest it deserves.</Text>
-        </View>
-
-        {/* Tips Section */}
-        <Text className="text-xl font-bold text-gray-900 font-outfit mb-6 text-center">Nurturing Tips</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-8 overflow-visible">
-          {[1, 2, 3].map((i) => (
-            <View key={i} className="bg-white border border-gray-100 p-6 rounded-[32px] w-64 mr-4 shadow-sm">
-              <View className="bg-primary-light w-10 h-10 rounded-xl items-center justify-center mb-4">
-                <Heart size={20} color="#FF7096" />
-              </View>
-              <Text className="text-xs text-gray-400 font-bold uppercase mb-2">Self-Care</Text>
-              <Text className="text-base font-bold text-gray-900 font-outfit mb-2">Warm Herbal Tea</Text>
-              <Text className="text-xs text-gray-500 font-inter leading-5">Sipping on chamomile or ginger tea can significantly help reduce menstrual cramps and bloating.</Text>
+        <Animated.View entering={FadeInDown.delay(300).duration(800)} className="px-6 mb-12">
+          <GlassCard intensity={50} style={{ padding: 40, borderRadius: 50 }}>
+            <View className="items-center">
+              <Sparkles size={24} color="#D4AF37" />
+              <Text className="text-primary font-bold text-[10px] uppercase tracking-[4px] mt-4 mb-4">Daily Ritual</Text>
+              <Text className="text-2xl font-bold text-gray-900 font-outfit text-center mb-4 leading-8">I am at peace with my body's natural rhythm.</Text>
+              <Text className="text-gray-500 text-center font-inter leading-6 text-sm">Today, I choose to listen to what my body needs and provide it with the rest it deserves.</Text>
             </View>
-          ))}
-        </ScrollView>
+          </GlassCard>
+        </Animated.View>
 
-        {/* Library Section */}
-        <View className="mb-8">
-          <Text className="text-2xl font-bold text-gray-900 font-outfit mb-2 text-center">Wellness Library</Text>
-          <Text className="text-gray-500 text-center font-inter mb-6">Curated reads for every phase of your cycle</Text>
-          
-          {/* Filters */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-8">
-            {categories.map((cat) => (
+        {/* Quick Media Access */}
+        <Animated.View entering={FadeInDown.delay(400).duration(800)} className="px-6 mb-12">
+          <TouchableOpacity 
+            onPress={() => navigation?.navigate('AudioLibrary')}
+            activeOpacity={0.9}
+            className="bg-white border border-white p-7 rounded-4xl flex-row items-center justify-between shadow-soft"
+          >
+            <View className="flex-row items-center">
+              <View className="bg-primary-light p-3 rounded-2xl mr-4">
+                <Headphones size={24} color="#8B004A" />
+              </View>
+              <View>
+                <Text className="text-lg font-bold text-gray-900 font-outfit">Soothing Sounds</Text>
+                <Text className="text-xs text-gray-500 font-inter">Open your media library</Text>
+              </View>
+            </View>
+            <View className="bg-primary/10 p-2 rounded-xl">
+              <ChevronRight size={20} color="#8B004A" />
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
+
+        {/* Library Filters */}
+        <Animated.View entering={FadeInDown.delay(500).duration(800)} className="mb-10">
+          <Text className="px-8 text-xl font-bold text-gray-900 font-outfit mb-6">Wellness Library</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-6">
+            {categories.map((cat, i) => (
               <TouchableOpacity 
                 key={cat} 
                 onPress={() => setSelectedCat(cat)}
-                className={`px-6 py-2 rounded-full mr-3 border-2 ${selectedCat === cat ? 'bg-primary border-primary' : 'bg-white border-primary-light'}`}
+                activeOpacity={0.7}
+                className={`px-8 py-3.5 rounded-4xl mr-4 ${selectedCat === cat ? 'bg-primary shadow-premium' : 'bg-white border border-white'}`}
               >
-                <Text className={`font-bold text-xs ${selectedCat === cat ? 'text-white' : 'text-primary'}`}>{cat}</Text>
+                <Text className={`font-bold text-[11px] uppercase tracking-widest ${selectedCat === cat ? 'text-white' : 'text-gray-400'}`}>{cat}</Text>
               </TouchableOpacity>
             ))}
+            <View className="w-10" />
           </ScrollView>
+        </Animated.View>
 
-          {/* Article List */}
-          <View className="gap-y-6">
-            {articles.map((art, i) => (
-              <TouchableOpacity key={i} className="bg-white border border-gray-100 p-6 rounded-[32px] shadow-sm">
-                <View className="flex-row justify-between items-center mb-3">
-                  <View className="bg-primary-light px-3 py-1 rounded-full">
-                    <Text className="text-[10px] font-bold text-primary uppercase">{art.tag}</Text>
+        {/* Article Cards */}
+        <View className={`px-6 gap-y-6 gap-x-4 mb-12 ${isDesktop || isTablet ? 'flex-row flex-wrap justify-between' : ''}`}>
+          {articles.map((art, i) => (
+            <Animated.View key={i} entering={FadeInRight.delay(i * 100).duration(600)} className={isDesktop ? 'w-[31%]' : isTablet ? 'w-[48%]' : 'w-full'}>
+              <TouchableOpacity activeOpacity={0.9} className="bg-white p-8 rounded-5xl shadow-soft border border-white">
+                <View className="flex-row justify-between items-center mb-5">
+                  <View className="bg-primary/5 px-4 py-1.5 rounded-full">
+                    <Text className="text-[10px] font-bold text-primary uppercase tracking-widest">{art.tag}</Text>
                   </View>
-                  <Text className="text-[10px] text-gray-400 font-inter">{art.read}</Text>
+                  <Text className="text-[10px] text-gray-400 font-inter uppercase tracking-widest">{art.read} read</Text>
                 </View>
-                <Text className="text-lg font-bold text-gray-900 font-outfit mb-2">{art.title}</Text>
-                <Text className="text-xs text-gray-500 font-inter leading-5 mb-4">{art.desc}</Text>
-                <TouchableOpacity className="bg-primary px-6 py-3 rounded-2xl self-start">
-                  <Text className="text-white font-bold text-xs">Read Article</Text>
+                <Text className="text-2xl font-bold text-gray-900 font-outfit mb-3 tracking-tight">{art.title}</Text>
+                <Text className="text-sm text-gray-500 font-inter leading-6 mb-8">{art.desc}</Text>
+                <TouchableOpacity className="bg-gray-900 py-4 px-8 rounded-3xl self-start shadow-md">
+                  <Text className="text-white font-bold text-xs uppercase tracking-widest">Read Article</Text>
                 </TouchableOpacity>
               </TouchableOpacity>
-            ))}
-          </View>
+            </Animated.View>
+          ))}
         </View>
 
-        {/* Reminders */}
-        <View className="bg-white border border-gray-100 p-10 rounded-[40px] mb-12 items-center shadow-sm">
-          <Text className="text-xl font-bold text-gray-900 font-outfit mb-8">Gentle Reminders</Text>
-          <View className="flex-row flex-wrap justify-center gap-10">
-            <View className="items-center w-[35%]">
-              <Droplet size={32} color="#FF7096" />
-              <Text className="text-[11px] font-bold text-gray-700 mt-2">Stay Hydrated</Text>
-            </View>
-            <View className="items-center w-[35%]">
-              <Couch size={32} color="#7CB69E" />
-              <Text className="text-[11px] font-bold text-gray-700 mt-2">Move Gently</Text>
-            </View>
-            <View className="items-center w-[35%]">
-              <Bed size={32} color="#9B8EC0" />
-              <Text className="text-[11px] font-bold text-gray-700 mt-2">Rest Well</Text>
-            </View>
-            <View className="items-center w-[35%]">
-              <Apple size={32} color="#F4A261" />
-              <Text className="text-[11px] font-bold text-gray-700 mt-2">Nourish</Text>
+        {/* Reminders Grid */}
+        <Animated.View entering={FadeInDown.delay(600).duration(800)} className="px-6 pb-20">
+          <View className="bg-white/80 p-10 rounded-5xl border border-white shadow-soft items-center">
+            <Text className="text-xl font-bold text-gray-900 font-outfit mb-10">Gentle Reminders</Text>
+            <View className="flex-row flex-wrap justify-between w-full">
+              {[
+                { icon: Droplet, color: '#8B004A', label: 'Hydrate' },
+                { icon: Couch, color: '#A93226', label: 'Rest' },
+                { icon: Bed, color: '#8B004A', label: 'Sleep' },
+                { icon: Apple, color: '#D4AF37', label: 'Nourish' }
+              ].map((item, i) => (
+                <View key={i} className={`items-center mb-8 ${isDesktop ? 'w-[22%]' : 'w-[45%]'}`}>
+                  <View className="bg-background w-16 h-16 rounded-3xl items-center justify-center mb-3">
+                    <item.icon size={28} color={item.color} />
+                  </View>
+                  <Text className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{item.label}</Text>
+                </View>
+              ))}
             </View>
           </View>
-        </View>
+        </Animated.View>
 
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

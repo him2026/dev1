@@ -1,81 +1,126 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, Image } from 'react-native';
-import { Mail, Lock, Eye, EyeOff, ChevronRight, Heart } from 'lucide-react-native';
+import { View, Text, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, StatusBar, Dimensions } from 'react-native';
+import { Mail, Lock, Eye, EyeOff, ChevronRight, Heart, Sparkles } from 'lucide-react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { useAuth } from '../context/AuthContext';
+import { Alert, ActivityIndicator } from 'react-native';
 
-const LoginScreen = () => {
+const { height } = Dimensions.get('window');
+
+const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const { login, loading } = useAuth();
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+    const { error } = await login(email, password);
+    if (error) {
+      Alert.alert('Login Failed', error.message);
+    }
+  };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-background">
+      <StatusBar barStyle="dark-content" />
+      
+      {/* Decorative Glow */}
+      <View className="absolute top-[-50] left-[-50] w-64 h-64 bg-primary/5 rounded-full blur-[60px]" />
+
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1 px-8 justify-center"
+        className="flex-1 px-8"
       >
-        <View className="items-center mb-12">
-          <View className="bg-primary-light w-20 h-20 rounded-[30px] items-center justify-center mb-6">
-            <Heart size={40} color="#FF7096" fill="#FF7096" />
-          </View>
-          <Text className="text-4xl font-bold text-gray-900 font-outfit mb-2">Welcome Back</Text>
-          <Text className="text-gray-500 font-inter text-center px-4">
-            Sign in to continue your journey with your intelligent mate.
-          </Text>
-        </View>
-
-        <View className="gap-y-6">
-          <View>
-            <Text className="text-sm font-bold text-gray-900 font-outfit mb-2 ml-1">Email Address</Text>
-            <View className="flex-row items-center bg-gray-50 border border-gray-100 rounded-[24px] px-6 py-4">
-              <Mail size={20} color="#9CA3AF" />
-              <TextInput
-                className="flex-1 ml-4 text-gray-900 font-inter"
-                placeholder="hello@example.com"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingVertical: 40 }}>
+          <View style={{ maxWidth: 480, width: '100%', alignSelf: 'center' }}>
+          
+          <Animated.View entering={FadeInDown.duration(800)} className="items-center mb-16">
+            <View className="bg-white p-6 rounded-5xl shadow-soft border border-white mb-8">
+              <Heart size={48} color="#8B004A" fill="#8B004A" />
+              <View className="absolute top-2 right-2">
+                <Sparkles size={16} color="#D4AF37" />
+              </View>
             </View>
-          </View>
+            <Text className="text-4xl font-bold text-gray-900 font-outfit tracking-tighter mb-3">Welcome Back</Text>
+            <Text className="text-gray-500 font-inter text-center leading-6 px-6">
+              Step back into your sacred space with your intelligent mate.
+            </Text>
+          </Animated.View>
 
-          <View>
-            <Text className="text-sm font-bold text-gray-900 font-outfit mb-2 ml-1">Password</Text>
-            <View className="flex-row items-center bg-gray-50 border border-gray-100 rounded-[24px] px-6 py-4">
-              <Lock size={20} color="#9CA3AF" />
-              <TextInput
-                className="flex-1 ml-4 text-gray-900 font-inter"
-                placeholder="••••••••"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-              />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                {showPassword ? <EyeOff size={20} color="#9CA3AF" /> : <Eye size={20} color="#9CA3AF" />}
-              </TouchableOpacity>
+          <Animated.View entering={FadeInUp.delay(200).duration(800)} className="gap-y-6">
+            <View>
+              <Text className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 ml-2">Email Address</Text>
+              <View className="flex-row items-center bg-white border border-white rounded-4xl px-7 py-5 shadow-soft">
+                <Mail size={22} color="#8B004A" opacity={0.6} />
+                <TextInput
+                  className="flex-1 ml-4 text-gray-900 font-inter text-base"
+                  placeholder="name@email.com"
+                  placeholderTextColor="#9CA3AF"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
             </View>
+
+            <View>
+              <Text className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 ml-2">Secure Password</Text>
+              <View className="flex-row items-center bg-white border border-white rounded-4xl px-7 py-5 shadow-soft">
+                <Lock size={22} color="#8B004A" opacity={0.6} />
+                <TextInput
+                  className="flex-1 ml-4 text-gray-900 font-inter text-base"
+                  placeholder="••••••••"
+                  placeholderTextColor="#9CA3AF"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} className="p-1">
+                  {showPassword ? <EyeOff size={22} color="#9CA3AF" /> : <Eye size={22} color="#9CA3AF" />}
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <TouchableOpacity className="self-end px-2">
+              <Text className="text-primary font-bold text-sm font-inter tracking-tight">Forgot password?</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              activeOpacity={0.8}
+              onPress={handleLogin}
+              disabled={loading}
+              className="bg-primary p-7 rounded-4xl flex-row items-center justify-center shadow-premium mt-4"
+            >
+              {loading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <>
+                  <Text className="text-white font-bold text-xl font-outfit mr-2">Sign In</Text>
+                  <ChevronRight size={24} color="white" />
+                </>
+              )}
+            </TouchableOpacity>
+          </Animated.View>
+
+          <Animated.View entering={FadeInUp.delay(400).duration(800)} className="flex-row justify-center mt-12 pb-10">
+            <Text className="text-gray-500 font-inter">New to HIM? </Text>
+            <TouchableOpacity onPress={() => navigation?.navigate('Register')}>
+              <Text className="text-primary font-bold font-inter">Create Account</Text>
+            </TouchableOpacity>
+          </Animated.View>
           </View>
-
-          <TouchableOpacity className="self-end mr-2">
-            <Text className="text-primary font-bold text-sm font-inter">Forgot Password?</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity className="bg-primary p-6 rounded-[24px] flex-row items-center justify-center shadow-lg shadow-primary/30 mt-4">
-            <Text className="text-white font-bold text-lg font-outfit mr-2">Sign In</Text>
-            <ChevronRight size={24} color="white" />
-          </TouchableOpacity>
-        </View>
-
-        <View className="flex-row justify-center mt-12">
-          <Text className="text-gray-500 font-inter">Don't have an account? </Text>
-          <TouchableOpacity>
-            <Text className="text-primary font-bold font-inter">Sign Up</Text>
-          </TouchableOpacity>
-        </View>
-
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
+
+// Added missing ScrollView import for better handling of different screen heights
+import { ScrollView } from 'react-native';
 
 export default LoginScreen;

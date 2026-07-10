@@ -1,0 +1,43 @@
+# HIM - Her Intelligent Mate | Period Tracker & Menstrual Cycle Companion
+# https://him-period-tracker.vercel.app/
+
+User-agent: *
+Allow: /
+Allow: /tracker
+Allow: /dashboard
+Allow: /journal
+Allow: /wellness
+Allow: /chat
+Allow: /insights
+Allow: /games
+Allow: /audio
+Allow: /log-period
+Allow: /login
+Allow: /register
+Allow: /partner
+Allow: /profile
+
+# Block internal/API routes
+Disallow: /_expo/
+Disallow: /api/
+
+# Sitemaps
+Sitemap: https://him-period-tracker.vercel.app/sitemap.xml
+
+# Crawl-delay for polite crawling
+Crawl-delay: 1
+
+# Google specific
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+# Bing specific
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+# Yandex specific
+User-agent: Yandex
+Allow: /
+Crawl-delay: 2
